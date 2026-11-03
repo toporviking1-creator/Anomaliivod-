@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1f33">
+<title>Аномалии объёма АЖ</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#0a0a0a; --muted:#1f2937; --line:#9ca3af; --card:#f3f4f6;
+  --poly:#0b4ea2; --poly-bg:#e3eeff; --oligo:#a1460a; --oligo-bg:#fff0e3;
+  --ok:#065f2c; --ok-bg:#dcfce7; --warn:#7a4b00; --warn-bg:#fff4cc; --bad:#9b1111; --bad-bg:#ffe1e1;
+  --accent:var(--poly); --accent-bg:var(--poly-bg);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body.oligo{--accent:var(--oligo);--accent-bg:var(--oligo-bg)}
+header{background:#0b1f33;color:#fff;padding:14px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:18px;font-weight:700}
+header .sub{font-size:13px;color:#e5e7eb}
+header button{background:#fff;color:#0b1f33;border:0;border-radius:8px;padding:6px 10px;font-weight:700;font-size:14px;cursor:pointer}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+main{max-width:860px;margin:0 auto;padding:16px}
+.fork{display:grid;gap:14px;margin-top:8px}
+.fork button{display:block;width:100%;text-align:left;border:3px solid;border-radius:14px;padding:18px;cursor:pointer;font:inherit}
+.fork .p{border-color:var(--poly);background:var(--poly-bg);color:#04254f}
+.fork .o{border-color:var(--oligo);background:var(--oligo-bg);color:#4a1f02}
+.fork b{font-size:22px;display:block}
+.fork span{font-size:15px;font-weight:600}
+.tabs{display:flex;gap:6px;overflow-x:auto;position:sticky;top:62px;background:#fff;padding:8px 0;z-index:4;border-bottom:2px solid var(--fg)}
+.tabs button{flex:0 0 auto;border:2px solid var(--fg);background:#fff;color:var(--fg);border-radius:999px;padding:7px 14px;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+.tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+h2{font-size:21px;margin:18px 0 8px;color:var(--accent)}
+h3{font-size:17px;margin:16px 0 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0}
+.box{border-left:5px solid;border-radius:8px;padding:10px 12px;margin:10px 0;font-weight:500}
+.box.ok{border-color:var(--ok);background:var(--ok-bg);color:#032b15}
+.box.warn{border-color:var(--warn);background:var(--warn-bg);color:#3a2400}
+.box.bad{border-color:var(--bad);background:var(--bad-bg);color:#4a0606}
+.box.info{border-color:var(--accent);background:var(--accent-bg);color:#0a0a0a}
+.ev{display:inline-block;font-size:12px;font-weight:700;border:1.5px solid var(--fg);border-radius:6px;padding:0 6px;margin-left:4px;white-space:nowrap}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:15px}
+th,td{border:1px solid var(--fg);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#111827;color:#fff}
+ul{padding-left:20px;margin:6px 0} li{margin:4px 0}
+label.chk{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;margin:6px 0;background:#fff;cursor:pointer}
+label.chk input{width:22px;height:22px;flex:0 0 22px;margin-top:2px;accent-color:var(--accent)}
+label.chk.done{background:var(--ok-bg);border-color:var(--ok)}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.calc label{font-weight:700;font-size:15px}
+.calc input,.calc select{width:100%;font:inherit;padding:9px;border:2px solid var(--fg);border-radius:8px;background:#fff;color:var(--fg)}
+.result{font-size:18px;font-weight:700;margin-top:10px}
+.cite{font-size:14px;color:var(--muted);font-style:italic}
+.small{font-size:14px;color:var(--muted)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.btn{border:2px solid var(--fg);background:#fff;color:var(--fg);border-radius:8px;padding:7px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+footer{font-size:13px;color:var(--muted);padding:20px 16px 40px;max-width:860px;margin:0 auto;border-top:1px solid var(--line)}
+.hidden{display:none}
+@media(max-width:520px){.calc{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <div><h1 id="htitle">Аномалии объёма АЖ</h1><div class="sub">КР РОАГ 2024 · O40, O41.0</div></div>
+    <button id="homeBtn" class="hidden" onclick="go('')">⇄ Сменить</button>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<footer>
+Источник: Клинические рекомендации «Аномалии объёма амниотической жидкости (многоводие, маловодие)», РОАГ, 2024. В скобках — УУР/УДД. Справочный инструмент, решение принимает врач.
+</footer>
+
+<script>
+const $=s=>document.querySelector(s);
+const ev=(a,b)=>`<span class="ev">${a}${b?'/'+b:''}</span>`;
+const store={get(k){try{return JSON.parse(localStorage.getItem(k)||'{}')}catch(e){return{}}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+function checklist(id, items){
+  const st=store.get('chk_'+id);
+  return `<div data-cl="${id}">`+items.map((t,i)=>`<label class="chk ${st[i]?'done':''}"><input type="checkbox" data-i="${i}" ${st[i]?'checked':''}><span>${t}</span></label>`).join('')+
+  `<div class="btnrow"><button class="btn" onclick="resetCl('${id}')">Сбросить отметки</button></div></div>`;
+}
+function bindChecklists(){
+  document.querySelectorAll('[data-cl]').forEach(w=>{
+    const id=w.dataset.cl;
+    w.querySelectorAll('input').forEach(inp=>inp.onchange=()=>{
+      const st=store.get('chk_'+id); st[inp.dataset.i]=inp.checked; store.set('chk_'+id,st);
+      inp.closest('label').classList.toggle('done',inp.checked);
+    });
+  });
+}
+function resetCl(id){store.set('chk_'+id,{});render();}
+
+/* ======================= МНОГОВОДИЕ ======================= */
+const POLY={
+  title:'Многоводие',
+  tabs:{
+  dx:()=>`
+<h2>Критерии и степень</h2>
+<div class="box info"><b>Одноплодная:</b> ИАЖ ≥ 25 см <b>или</b> МВК ≥ 8 см. Допустимы референсные таблицы для срока (ИАЖ ≥ 95-го перцентиля).</div>
+<div class="box warn"><b>Многоплодная — только МВК:</b> ≥ 8 см до 20 нед, ≥ 10 см после 20 нед. Ведение — по КР «Многоплодная беременность». МХ двойня: много-/маловодие у одного + норма у другого → УЗИ не реже 1 р/нед; многоводие у одного + МВК ≤ 2 см у другого → ФФТС.</div>
+<div class="card">
+  <div class="calc">
+    <div><label>ИАЖ, см</label><input id="iaj" type="number" step="0.1" inputmode="decimal" placeholder="напр. 27.5"></div>
+    <div><label>МВК, см</label><input id="mvk" type="number" step="0.1" inputmode="decimal" placeholder="напр. 9"></div>
+  </div>
+  <div id="res" class="result">Введите ИАЖ и/или МВК</div>
+</div>
+<h3>Степени и риск аномалий</h3>
+<table>
+<tr><th>Степень</th><th>ИАЖ, см</th><th>МВК, см</th><th>Доля</th><th>Аномалии плода*</th><th>У новор.**</th></tr>
+<tr><td>Лёгкая</td><td>25–30</td><td>8–11</td><td>65–70%</td><td>6–10%</td><td>1%</td></tr>
+<tr><td>Умеренная</td><td>30,1–35</td><td>12–15</td><td>20%</td><td>10–15%</td><td>2%</td></tr>
+<tr><td>Тяжёлая</td><td>≥ 35,1</td><td>≥ 16</td><td>&lt;15%</td><td>20–40%</td><td>10%</td></tr>
+</table>
+<p class="small">* выявлены антенатально; ** выявлены только после родов. Табл. 3 КР даёт границы 24–29,9 / 30–34,9 / ≥35 — расхождение внутри самой КР.</p>
+<h3>Ключевое</h3>
+<ul>
+<li>Идиопатическое многоводие — <b>диагноз исключения</b> (60–70% случаев).</li>
+<li>Главные причины: СД матери (8–25%) и ВПР плода; также инфекции, аллоиммунизация.</li>
+<li>Изолированное «идиопатическое»: хромосомные аномалии 2,1%, моногенные — до 5,6%.</li>
+<li><b>Многоводие + ЗРП</b> — высокий риск генетики (трисомии 18, 13). Многоводие + макросомия — думай о диабете.</li>
+<li>МКБ-10: <b>O40</b>.</li>
+</ul>`,
+
+  exam:()=>`
+<h2>Обследование</h2>
+<h3>1. Анамнез и осмотр</h3>
+${checklist('p_anam',[
+ `Анамнез матери и семьи: лекарства, заболевания, течение беременности, наследственность, ВПР у родственников ${ev('C','5')}`,
+ `ВДМ: превышение на ≥ 3 см над сроком или быстрый рост матки → УЗИ (многоводие / макросомия) ${ev('C','5')}`,
+ `Жалобы при выраженном: одышка, стеснение в животе, отёки, варикоз ног и вульвы, редко олигурия`
+])}
+<h3>2. УЗИ</h3>
+${checklist('p_us',[
+ `Полуколичественная оценка: МВК (до 18 нед — МВК или субъективно), после 18 нед — ИАЖ. ЦДК — исключить пуповину в кармане ${ev('C','4')}`,
+ `Детальное УЗИ плода на аномалии развития ${ev('C','5')}`,
+ `Фетометрия: макросомия? ЗРП? (ЗРП + многоводие → генетика)`,
+ `<b>МССК СМА</b> при идиопатическом многоводии <b>до 35 нед</b>, даже без водянки — исключить анемию ${ev('C','4')}`,
+ `МССК СМА при НВП или УЗ-признаках внутриутробной инфекции ${ev('C','5')}`,
+ `Хориоангиома? Оценить размер: ≥ 5 см — риск НВП и многоводия → консилиум`,
+ `ИЦН? → ведение по КР «ИЦН»`
+])}
+<div class="card"><b>Детальное УЗИ при выраженном многоводии (Прил. А3.1):</b>
+${checklist('p_det',[
+ 'Фетометрия','ЭхоКГ плода','Двигательная активность (неврологический статус)','Положение рук и ног — артрогрипоз',
+ 'Желудок: наличие и размер — ТПС, атрезия пищевода','Лицо и нёбо','Шея — объёмные образования',
+ 'Почки — обструкция ЛМС','Нижние отделы позвоночника, таз — крестцово-копчиковая тератома',
+ 'Признаки водянки','Плацентарное ложе — крупные хориоангиомы','Допплер МССК СМА — анемия'
+])}</div>
+<h3>3. Лаборатория</h3>
+${checklist('p_lab',[
+ `Исключить диабет ${ev('C','5')}. Повторный ПГТТ — рассмотреть, если многоводие в III триместре и/или &gt; 1 мес после скрининга`,
+ `IgG и IgM к TORCH (краснуха, ЦМВ, токсоплазма, ВПГ-1/2) + парвовирус B19 — <b>даже если делали ранее</b> ${ev('C','5')}`,
+ `При водянке: группа крови ABO, Rh, антитела (аллоиммунизация), семейный анамнез ${ev('C','5')}`,
+ `Наследственная патология в анамнезе → генетическое консультирование`
+])}
+<h3>4. Генетика</h3>
+${checklist('p_gen',[
+ `ВПР + многоводие → оценка прогноза, медико-генетическое консультирование, ИПД ${ev('C','5')}`,
+ `При ИПД — ХМА, в отдельных случаях секвенирование экзома/генома ${ev('C','5')}`,
+ `Выраженное многоводие → рассмотреть ХМА ${ev('C','5')}`,
+ `Выраженное + сниженная активность плода → тест на нервно-мышечные заболевания (врождённая миотоническая дистрофия) ${ev('C','5')}`,
+ `Отказ от ИПД → НИПС (свободная ДНК плода) ${ev('C','5')}`
+])}
+<div class="box warn">Диагностический амниоцентез при изолированном <b>лёгком/умеренном</b> многоводии — пользы не доказано.</div>
+<div class="box info">Тактика при ВПР/ХА, хориоангиоме — <b>консилиум</b> с учётом срока и прогноза для жизни плода.</div>`,
+
+  tx:()=>`
+<h2>Лечение</h2>
+<div class="box ok"><b>Лёгкое и умеренное многоводие — лечения не требует.</b></div>
+<h3>Амниоредукция</h3>
+<div class="card">
+<b>Показание:</b> выраженное многоводие + сильный дискомфорт и/или одышка у матери ${ev('C','5')}
+<ul>
+<li>За процедуру — 1,5–3 л.</li>
+<li>Многоводие обычно рецидивирует → ИАЖ каждые 1–3 нед.</li>
+<li>Беременность не пролонгирует; сама процедура — фактор риска ПРПО и ПР.</li>
+<li>Причина выраженного многоводия с дыхательной недостаточностью матери — чаще ВПР плода.</li>
+</ul></div>
+<h3>Индометацин</h3>
+<div class="box bad"><b>Не рекомендовано</b> назначать #индометацин только ради уменьшения АЖ ${ev('C','3')}. Риски у новорождённого: снижение диуреза, ↑креатинин (неделями), ВЖК, ПВЛ, НЭК.</div>
+<div class="card">
+<b>Исключение:</b> быстро нарастающее многоводие, требующее серийных амниоредукций, <b>срок &lt; 32 нед</b> ${ev('C','5')}
+<ul>
+<li>Только по решению <b>ВК</b> + ИДС на off-label.</li>
+<li>Схема (Moise): <b>25 мг каждые 6 ч per os</b>; оптимальная доза не установлена.</li>
+<li>УЗИ ИАЖ 1–2 раза в неделю.</li>
+<li>ЭхоКГ плода — рассмотреть в первые 24 ч.</li>
+</ul>
+<div class="box bad"><b>Немедленная отмена:</b> развилось маловодие · значимое сужение артериального протока · регургитация на трикуспидальном клапане.</div>
+</div>
+<h3>Лечение причины</h3>
+<ul>
+<li>СД → контроль гликемии, коррекция, эндокринолог.</li>
+<li>Аллоиммунизация → КР «Резус-изоиммунизация. Гемолитическая болезнь плода».</li>
+<li>Инфекция, иная соматическая патология → лечение основного заболевания.</li>
+</ul>`,
+
+  birth:()=>`
+<h2>Родоразрешение</h2>
+<div class="box info"><b>Лёгкое идиопатическое:</b> преиндукция/индукция <b>не раньше 39 нед</b> ${ev('C','5')}. Раннее родоразрешение исходы не улучшает.</div>
+<div class="card"><b>Умеренное и выраженное:</b> может быть рекомендована амниоредукция накануне родоразрешения — ↑шанс вагинальных родов, ↓риск ПРК ${ev('C','4')}</div>
+<div class="box warn"><b>Выраженное — стационар 3-го уровня</b>: высокий риск недиагностированных ВПР ${ev('C','5')}. Неонатологи-реаниматологи в команде.</div>
+<h3>Риски в родах</h3>
+${checklist('p_birth',[
+ 'Выпадение петель пуповины / мелких частей — особенно при неправильном положении, ПР, ПРПО',
+ 'Неправильное положение плода',
+ 'ПРК из-за перерастяжения матки — профилактика в III периоде',
+ 'Новорождённый — осмотр на недиагностированные аномалии (до 10% при выраженном)'
+])}`,
+
+  follow:()=>`
+<h2>Наблюдение</h2>
+<table>
+<tr><th>Ситуация</th><th>Контроль</th></tr>
+<tr><td>Изолированное лёгкое</td><td>Дополнительные УЗИ <b>не рекомендованы</b> ${ev('C','4')}</td></tr>
+<tr><td>Умеренное и тяжёлое</td><td>УЗИ каждые <b>1–3 нед</b>: ИАЖ + длина шейки матки ${ev('C','4')}</td></tr>
+<tr><td>После амниоредукции</td><td>ИАЖ каждые 1–3 нед</td></tr>
+<tr><td>На индометацине</td><td>ИАЖ 1–2 р/нед, ЭхоКГ плода</td></tr>
+</table>
+<h3>Критерии качества (для многоводия)</h3>
+${checklist('p_q',[
+ 'Скрининг I триместра по 1130н','УЗ-скрининг 19–21 нед','Скрининг на TORCH',
+ 'Тест на изоиммунизацию при подозрении на анемию/водянку','Консультация генетика',
+ 'Измерены МВК и/или ИАЖ','Контроль через 1–3 нед','МССК СМА для исключения анемии'
+])}`
+  }
+};
+
+/* ======================= МАЛОВОДИЕ ======================= */
+const OLIGO={
+  title:'Маловодие',
+  tabs:{
+  dx:()=>`
+<h2>Критерии и степень</h2>
+<div class="box info"><b>ИАЖ ≤ 5 см или МВК ≤ 2 см</b> ${ev('C','4')}. Норма МВК: &gt; 2 и &lt; 8 см.</div>
+<div class="box warn"><b>Предпочтительнее МВК:</b> ИАЖ гипердиагностирует маловодие и увеличивает число индукций без улучшения исходов.</div>
+<div class="card">
+  <div class="calc">
+    <div><label>ИАЖ, см</label><input id="iaj" type="number" step="0.1" inputmode="decimal" placeholder="напр. 4.2"></div>
+    <div><label>МВК, см</label><input id="mvk" type="number" step="0.1" inputmode="decimal" placeholder="напр. 1.8"></div>
+  </div>
+  <div id="res" class="result">Введите ИАЖ и/или МВК</div>
+</div>
+<h3>Степени</h3>
+<table>
+<tr><th>Степень</th><th>ИАЖ, см</th></tr>
+<tr><td>Лёгкая</td><td>4,1–5,0</td></tr>
+<tr><td>Умеренная</td><td>2,1–4,0</td></tr>
+<tr><td>Тяжёлая</td><td>0–2,0</td></tr>
+<tr><td>Ангидрамнион</td><td>ИАЖ/МВК не измеримы, тонкий эхопрозрачный «ободок»</td></tr>
+</table>
+<h3>Ключевое</h3>
+<ul>
+<li><b>II триместр</b> — чаще ВПР (идиопатическое лишь 4%); <b>III</b> — чаще неясной этиологии (52%).</li>
+<li>ПРПО — <b>&gt; 37%</b> случаев маловодия во II–III триместрах.</li>
+<li>II триместр: гипоплазия лёгких (87%) — главный предиктор гибели, смертность до 90%. Критично — 16–24 нед.</li>
+<li>Синдром сдавления: контрактуры, деформации.</li>
+<li>Исходы vs норма: мертворождение 1,4 vs 0,3%, неонатальная смертность 5 vs 0,3%, ОРИТН 7 vs 2%.</li>
+<li>МКБ-10: <b>O41.0</b>.</li>
+</ul>`,
+
+  exam:()=>`
+<h2>Обследование</h2>
+<h3>1. Анамнез и осмотр</h3>
+${checklist('o_anam',[
+ `Анамнез матери и семьи: лекарства, заболевания, течение беременности, наследственность, ВПР у родственников ${ev('C','5')}`,
+ `ВДМ ${ev('C','4')}`,
+ `<b>Подтекание / жидкие выделения → осмотр в зеркалах + тесты на разрыв оболочек</b> (по КР «Преждевременные роды») ${ev('C','4')}`
+])}
+<h3>2. УЗИ</h3>
+${checklist('o_us',[
+ `МВК (свободный от пуповины и частей плода, ширина &gt; 1 см, датчик перпендикулярно, ЦДК при сомнении)`,
+ `Детальное УЗИ на аномалии развития ${ev('C','5')}`
+])}
+<div class="card"><b>Детальное УЗИ при маловодии (Прил. А3.1):</b>
+${checklist('o_det',[
+ 'Фетометрия — ЗРП? (→ КР «ЗРП»)','Допплерометрия','Плацента',
+ 'Место прикрепления пуповины, число сосудов',
+ 'Почки: наличие, размер, положение, эхогенность, кисты, дилатация','Мочевой пузырь: размер, форма',
+ 'Пол плода (клапан задней уретры — только у мальчиков; у них чаще дисплазия/агенезия почек)',
+ 'Маркеры анеуплоидии II трим.: ГЭФ, кисты СС, ЕАП, пиелоэктазия, короткие бедро/плечо, гиперэхогенный кишечник, шейная складка, носовая кость'
+])}</div>
+<h3>3. Дополнительно</h3>
+${checklist('o_add',[
+ `МРТ плода — уточнить аномалии, особенно при выраженном маловодии (режимы T1/T2) ${ev('C','5')}`,
+ `ВПР + маловодие → прогноз, медико-генетическое консультирование, ИПД ${ev('C','5')}`,
+ `<b>Амниоцентез</b> при сочетании с ВПР; метод — ХМА ${ev('C','5')}`,
+ `Отказ / технически невозможен → НИПС (ДНК-скрининг) ${ev('C','5')}`
+])}
+<div class="box ok"><b>Изолированное маловодие без УЗ-признаков аномалий</b> — риск генетики общепопуляционный.</div>`,
+
+  tx:()=>`
+<h2>Лечение</h2>
+<div class="box ok"><b>Лёгкое и умеренное маловодие — лечения не требует.</b></div>
+<div class="box bad"><b>Не рекомендуется</b> лечить маловодие во время беременности (в т.ч. гидратацией) — клиническая польза не установлена ${ev('B','2')}</div>
+<p class="small">Комментарий КР: оральная гидратация 1–2 л воды может временно поднять ИАЖ до 48 ч (особенно при гиповолемии) — проще и безопаснее в/в инфузии и амниоинфузии.</p>
+<h3>Амниоинфузия</h3>
+<div class="card">
+NaCl 0,9% или Рингера лактат в полость матки. Эффект временный, симптоматический.
+<p><b>Возможные цели:</b></p>
+<ul>
+<li>Профилактическая — при маловодии.</li>
+<li>Коррекция децелераций от компрессии пуповины в родах.</li>
+<li>ПРПО при сроке <b>≥ 26 нед</b>.</li>
+</ul></div>
+<div class="box bad"><b>Не рекомендована</b> ${ev('C','5')}:
+<ul>
+<li>хориоамнионит;</li>
+<li>для облегчения НАП при тазовом предлежании;</li>
+<li>ПРПО &lt; 26 нед;</li>
+<li>профилактика САМ;</li>
+<li>ангидрамнион во II трим. для улучшения визуализации.</li>
+</ul></div>
+<p class="small">Комментарий КР (противоречит последнему пункту): при ангидрамнионе амниоинфузию можно рассмотреть после взвешивания пользы/риска — и разово для визуализации анатомии плода.</p>
+<div class="box warn">Олигурия/анурия плода от первичной патологии почек — амниоинфузия не поможет: постнатально диализ, возможно трансплантация.</div>`,
+
+  birth:()=>`
+<h2>Родоразрешение</h2>
+<div class="box info"><b>Изолированное идиопатическое + целые оболочки:</b> рассмотреть родоразрешение в <b>36⁰–37⁶ нед</b> либо в момент диагноза, если он поставлен позже ${ev('C','5')}. Срок — предмет споров.</div>
+<div class="box warn"><b>Непрерывная интранатальная КТГ</b> — риск компрессии пуповины ${ev('C','4')}</div>
+<div class="card">Уровень стационара: 2–3; тяжёлые случаи — только 3-й уровень (ОРИТН, вероятность аномалий).</div>
+<h3>Чек-лист в родах</h3>
+${checklist('o_birth',[
+ 'Непрерывная КТГ','Готовность к вариабельным децелерациям (компрессия пуповины)',
+ 'Амниоинфузия при децелерациях от компрессии пуповины — как вариант',
+ 'Неонатолог-реаниматолог на родах'
+])}`,
+
+  follow:()=>`
+<h2>Наблюдение</h2>
+<div class="box info"><b>Еженедельно: МВК + КТГ. Фетометрия — каждые 2 нед</b> ${ev('B','2')}. Динамический мониторинг снижает частоту необъяснимой гибели плода.</div>
+<h3>Критерии качества (для маловодия)</h3>
+${checklist('o_q',[
+ 'Скрининг I триместра по 1130н','УЗ-скрининг 19–21 нед','Скрининг на TORCH',
+ 'Консультация генетика при аномальном объёме АЖ','Измерены МВК и/или ИАЖ','Контроль через 1–3 нед'
+])}`
+  }
+};
+
+const TABS=[['dx','Диагноз'],['exam','Обследование'],['tx','Лечение'],['birth','Роды'],['follow','Наблюдение']];
+
+function classify(type){
+  const i=parseFloat($('#iaj').value), m=parseFloat($('#mvk').value), r=[];
+  const hi=!isNaN(i), hm=!isNaN(m);
+  if(!hi&&!hm){$('#res').textContent='Введите ИАЖ и/или МВК';return;}
+  if(type==='poly'){
+    if(hi){ r.push(i<25?'ИАЖ: норма (<25)': i<=30?'ИАЖ: многоводие лёгкое': i<=35?'ИАЖ: многоводие умеренное':'ИАЖ: многоводие тяжёлое'); }
+    if(hm){ r.push(m<8?'МВК: норма (<8)': m<12?'МВК: многоводие лёгкое': m<16?'МВК: многоводие умеренное':'МВК: многоводие тяжёлое'); }
+  } else {
+    if(hi){ r.push(i>5?'ИАЖ: не маловодие (>5)': i>4?'ИАЖ: маловодие лёгкое': i>2?'ИАЖ: маловодие умеренное': i>0?'ИАЖ: маловодие тяжёлое':'ИАЖ = 0: ангидрамнион?'); }
+    if(hm){ r.push(m>2?(m<8?'МВК: норма (2–8)':'МВК ≥8: многоводие!'):'МВК ≤2: маловодие'); }
+  }
+  $('#res').innerHTML=r.join('<br>');
+}
+
+function go(h){location.hash=h;}
+function render(){
+  const [br,tab='dx']=location.hash.slice(1).split('/');
+  const app=$('#app');
+  document.body.classList.toggle('oligo',br==='oligo');
+  if(br!=='poly'&&br!=='oligo'){
+    $('#homeBtn').classList.add('hidden'); $('#htitle').textContent='Аномалии объёма АЖ';
+    app.innerHTML=`<h2 style="color:#0a0a0a">Что у пациентки?</h2>
+<div class="fork">
+ <button class="p" onclick="go('poly/dx')"><b>Многоводие</b><span>ИАЖ ≥ 25 см или МВК ≥ 8 см · O40</span></button>
+ <button class="o" onclick="go('oligo/dx')"><b>Маловодие</b><span>ИАЖ ≤ 5 см или МВК ≤ 2 см · O41.0</span></button>
+</div>
+<div class="card" style="margin-top:18px"><b>Как мерить</b><ul>
+<li><b>МВК</b> — самый глубокий вертикальный карман без частей плода и пуповины, ширина &gt; 1 см; датчик перпендикулярно; ЦДК при сомнении.</li>
+<li><b>ИАЖ</b> — сумма МВК в 4 квадрантах; считать после 18 нед. До 18 нед — МВК или субъективно.</li>
+<li>Многоплодная — <b>только МВК</b>.</li>
+<li>МВК точнее для маловодия, ИАЖ — для многоводия.</li></ul></div>`;
+    return;
+  }
+  const D=br==='poly'?POLY:OLIGO;
+  $('#homeBtn').classList.remove('hidden'); $('#htitle').textContent=D.title;
+  app.innerHTML=`<nav class="tabs">${TABS.map(([k,n])=>`<button class="${k===tab?'on':''}" onclick="go('${br}/${k}')">${n}</button>`).join('')}</nav>`+(D.tabs[tab]||D.tabs.dx)();
+  bindChecklists();
+  if($('#iaj')){['#iaj','#mvk'].forEach(s=>$(s).oninput=()=>classify(br));}
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',render);
+render();
+</script>
+</body>
+</html>
